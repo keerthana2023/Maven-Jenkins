@@ -1,0 +1,47 @@
+pipeline
+{
+    agent any
+    stages
+    {
+        stage('ContinuousDownload')
+        {
+            steps
+            {
+              git 'https://github.com/intelliqittrainings/maven.git'  
+            }
+        }
+        stage('ContinuousBuild')
+        {
+            steps
+            {
+                sh 'mvn package'
+            }
+        }
+        stage('ContinuousDeployment')
+        {
+            steps
+            {
+                sh 'scp /home/ubuntu/.jenkins/workspace/DeclarativePipeline/webapp/target/webapp.war ubuntu@172.31.7.219:/var/lib/tomcat9/webapps/test1.war'
+            }
+        }
+         stage('ContinuousTest')
+        {
+            steps
+            {
+              git 'https://github.com/intelliqittrainings/FunctionalTesting.git'
+              sh 'java -jar /home/ubuntu/.jenkins/workspace/DeclarativePipeline/testing.jar'
+            }
+        }
+    }
+   post
+   {
+      success
+      {
+        sh 'scp /home/ubuntu/.jenkins/workspace/DeclarativePipeline/webapp/target/webapp.war ubuntu@172.31.17.152:/var/lib/tomcat9/webapps/prod1.war' 
+      }
+      failure
+      {
+        mail bcc: '', body: '', cc: '', from: '', replyTo: '', subject: 'CI has failed', to: 'keerthanarajeevam@gmail.com'
+      }
+    }
+}
